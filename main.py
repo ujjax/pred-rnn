@@ -30,24 +30,28 @@ class Pred_LSTM(object):
 			self.cells.append(cell)
 
 	def forward(self, inputs):
-
 		outputs = []
 
-		for i,n_step in enumerate(self.num_steps):
-			if i == 0: 			#Initialize state
-				continue
-
+		for n_step in self.num_steps:
 			for j,cell in enumerate(self.cells):
-				if j==0: 						#Input from inputs
+
+				if n_step == 0 and j==0: 			#Initialize state
+					self.M[n_step], self.C[n_step], self.H[n_step] = cell(inputs[:,n_step,:], )
 					continue
 
+				if n_step == 0:						#Initialize state
+					self.M[n_step], self.C[n_step], self.H[n_step] = cell(self.H[n_step-1], )
 
-				if j==self.n_layers-1:			#Capture output
+				if j==0: 							#Input from inputs
+					self.M[n_step], self.C[n_step], self.H[n_step] = cell(inputs[:,n_step,:], (self.H[n_step],self.C[n_step],self.M.items()[-1][1]))
 					continue
 
+				if j==self.n_layers-1:				#Capture output
+					out, self.C[n_step], self.H[n_step] = cell(self.H[n_step-1], (self.H[n_step],self.C[n_step],self.M[n_step-1]))
+					outputs.append(out)
+					continue
 
 				self.M[n_step], self.C[n_step], self.H[n_step] = cell(self.H[n_step-1], (self.H[n_step],self.C[n_step],self.M[n_step-1]))
-
 
 		return outputs
 
