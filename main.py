@@ -24,7 +24,7 @@ class Pred_LSTM(object):
 
 		self.embeddings = nn.Embedding(self.vocab_size, self.input_sizes[0])
 
-		self.cells = []
+		self.cells = nn.ModuleList([])
 		for i in self.n_layers:
 			cell = SpatioTemporal_LSTM(self.hidden_sizes[i], self.input_sizes[i])
 			self.cells.append(cell)
