@@ -15,44 +15,78 @@ class Encoder(nn.Module):
 		self.n_layers = n_layers
 		self.hidden_sizes = hidden_sizes
 		self.input_sizes = input_sizes
-		self.num_steps = num_steps
-		self.batch_size = batch_size
 
 		self.M = dict()
 		self.C = dict()
 		self.H = dict()
 
-		self.embeddings = nn.Embedding(self.vocab_size, self.input_sizes[0])
+		self.h = dict()
+        self.c = dict()
+        self.m = { 0 : Parameter(torch.Tensor())}
+
+
+        self.h[0] = Parameter(torch.Tensor(shape))
+        self.h[1] = Parameter(torch.Tensor(shape))
+        self.h[2] = Parameter(torch.Tensor(shape))
+        self.h[3] = Parameter(torch.Tensor(shape))
+
+
+        self.c[0] = Parameter(torch.Tensor(shape))
+        self.c[1] = Parameter(torch.Tensor(shape))
+        self.c[2] = Parameter(torch.Tensor(shape))
+        self.c[3] = Parameter(torch.Tensor(shape))
 
 		self.cells = nn.ModuleList([])
 		for i in self.n_layers:
 			cell = SpatioTemporal_LSTM(self.hidden_sizes[i], self.input_sizes[i])
 			self.cells.append(cell)
 
-	def forward(self, inputs):
-		outputs = []
-
-		for n_step in self.num_steps:
-			for j,cell in enumerate(self.cells):
-
-				if n_step == 0 and j==0: 			#Initialize state
-					self.M[n_step], self.C[n_step], self.H[n_step] = cell(inputs[:,n_step,:], None)
+	def forward(self, input_, first_timestep = False):
+		for j,cell in enumerate(self.cells):
+			if first_timestep == True:
+				if j == 0:
+					self.H[j], self.C[j], self.M[j] = cell(input_, (self.h[j],self.c[j],self.m[j]))
 					continue
+				else:
+					self.H[j], self.C[j], self.M[j] = cell(self.H[j-1], (self.h[j],self.c[j],self.M[j-1]))
+				continue
 
-				if n_step == 0:						#Initialize state
-					self.M[n_step], self.C[n_step], self.H[n_step] = cell(self.H[n_step-1], None)
+			if j==0:
+				self.H[j], self.C[j], self.M[j] = cell(input_, (self.H[j],self.C[j],self.M[self.n_layers-1]))
+				continue
 
-				if j==0: 							#Input from inputs
-					self.M[n_step], self.C[n_step], self.H[n_step] = cell(inputs[:,n_step,:], (self.H[n_step],self.C[n_step],self.M.items()[-1][1]))
-					continue
+			self.H[j], self.C[j], self.M[j] = cell(self.H[j-1],(self.H[j],self.C[j],self.M[j-1]))
 
-				if j==self.n_layers-1:				#Capture output
-					out, self.C[n_step], self.H[n_step] = cell(self.H[n_step-1], (self.H[n_step],self.C[n_step],self.M[n_step-1]))
-					outputs.append(out)
-					continue
+		return self.H , self. C, self.M
 
-				self.M[n_step], self.C[n_step], self.H[n_step] = cell(self.H[n_step-1], (self.H[n_step],self.C[n_step],self.M[n_step-1]))
 
-		return outputs
 
+class Decoder(nn.Module):
+	"""
+	docstring for Decoder
+	
+	Using M in zigzag fashion as suggested in Spatiotemporal LSTM
+	
+	"""
+	def __init__(self):
+		super(Decoder, self).__init__()
+		self.n_layers = n_layers
+		self.hidden_sizes = hidden_sizes
+		self.input_sizes = input_sizes
+
+
+		self.cells = nn.ModuleList([])
+		for i in self.n_layers:
+			cell = SpatioTemporal_LSTM(self.hidden_sizes[i], self.input_sizes[i])
+			self.cells.append(cell)
+
+	def forward(self, input_, C,H,M):
+		for j,cell in enumerate(self.cells):
+			if j==0:
+				H[j], C[j],M[j] = cell(input_,(H[j],C[j],M[n_layers-1]))
+
+			if j==n_layers-1:
+				H[j], C[j],M[j] = cell(H[j-1],(H[j],C[j],M[j-1]))
+				output = H[j]
+		return output
 
