@@ -8,10 +8,10 @@ from torch.autograd import Variable
 from ST_LSTM import *
 
 
-class Pred_LSTM(object):
-	"""docstring for Pred_LSTM"""
+class Encoder(nn.Module):
+	"""docstring for Encoder"""
 	def __init__(self):
-		super(Pred_LSTM, self).__init__()
+		super(Encoder, self).__init__()
 		self.n_layers = n_layers
 		self.hidden_sizes = hidden_sizes
 		self.input_sizes = input_sizes
@@ -36,11 +36,11 @@ class Pred_LSTM(object):
 			for j,cell in enumerate(self.cells):
 
 				if n_step == 0 and j==0: 			#Initialize state
-					self.M[n_step], self.C[n_step], self.H[n_step] = cell(inputs[:,n_step,:], )
+					self.M[n_step], self.C[n_step], self.H[n_step] = cell(inputs[:,n_step,:], None)
 					continue
 
 				if n_step == 0:						#Initialize state
-					self.M[n_step], self.C[n_step], self.H[n_step] = cell(self.H[n_step-1], )
+					self.M[n_step], self.C[n_step], self.H[n_step] = cell(self.H[n_step-1], None)
 
 				if j==0: 							#Input from inputs
 					self.M[n_step], self.C[n_step], self.H[n_step] = cell(inputs[:,n_step,:], (self.H[n_step],self.C[n_step],self.M.items()[-1][1]))
