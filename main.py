@@ -41,6 +41,14 @@ class Encoder(nn.Module):
 			cell = SpatioTemporal_LSTM(self.hidden_sizes[i], self.input_sizes[i])
 			self.cells.append(cell)
 
+		self._reset_parameters()
+
+	def _reset_parameters(self):
+        stdv = 1.0 / math.sqrt(self.hidden_size)
+        for weight in self.parameters():
+            weight.data.uniform_(-stdv, stdv)
+
+
 	def forward(self, input_, first_timestep = False):
 		for j,cell in enumerate(self.cells):
 			if first_timestep == True:
@@ -59,6 +67,12 @@ class Encoder(nn.Module):
 
 		return self.H , self. C, self.M
 
+	def initHidden(self):
+        result = Variable(torch.zeros(1, 1, self.hidden_size)) #################SHAPE
+        if use_cuda:
+            return result.cuda()
+        else:
+            return result
 
 
 class Decoder(nn.Module):
@@ -90,3 +104,9 @@ class Decoder(nn.Module):
 				output = H[j]
 		return output
 
+	def initHidden(self):
+        result = Variable(torch.zeros(1, 1, self.hidden_size))
+        if use_cuda:
+            return result.cuda()
+        else:
+            return result

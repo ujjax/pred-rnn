@@ -18,22 +18,24 @@ class SpatioTemporal_LSTM(nn.Module):
 
         self.linear = nn.linear(self.input_size + self.hidden_size , 4*self.hidden_size)
 
-        self.weight_xg = Parameter(torch.Tensor())
-        self.weight_hg = Parameter(torch.Tensor())
-        self.weight_xi = Parameter(torch.Tensor())
-        self.weight_hi = Parameter(torch.Tensor())
-        self.weight_xf = Parameter(torch.Tensor())
-        self.weight_hf = Parameter(torch.Tensor())
-        self.weight_xg_ = Parameter(torch.Tensor())
-        self.weight_mg = Parameter(torch.Tensor())
-        self.weight_xi_ = Parameter(torch.Tensor())
-        self.weight_mi = Parameter(torch.Tensor())
-        self.weight_xf_ = Parameter(torch.Tensor())
-        self.weight_mf = Parameter(torch.Tensor())
-        self.weight_xo = Parameter(torch.Tensor())
-        self.weight_ho = Parameter(torch.Tensor())
-        self.weight_co = Parameter(torch.Tensor())
-        self.weight_mo = Parameter(torch.Tensor())
+        # shape = [shape]
+
+        self.weight_xg = Parameter(torch.Tensor(shape))
+        self.weight_hg = Parameter(torch.Tensor(shape))
+        self.weight_xi = Parameter(torch.Tensor(shape))
+        self.weight_hi = Parameter(torch.Tensor(shape))
+        self.weight_xf = Parameter(torch.Tensor(shape))
+        self.weight_hf = Parameter(torch.Tensor(shape))
+        self.weight_xg_ = Parameter(torch.Tensor(shape))
+        self.weight_mg = Parameter(torch.Tensor(shape))
+        self.weight_xi_ = Parameter(torch.Tensor(shape))
+        self.weight_mi = Parameter(torch.Tensor(shape))
+        self.weight_xf_ = Parameter(torch.Tensor(shape))
+        self.weight_mf = Parameter(torch.Tensor(shape))
+        self.weight_xo = Parameter(torch.Tensor(shape))
+        self.weight_ho = Parameter(torch.Tensor(shape))
+        self.weight_co = Parameter(torch.Tensor(shape))
+        self.weight_mo = Parameter(torch.Tensor(shape))
         self.weight_1x1 = Parameter(torch.Tensor(1,1))
 
         if bias:
@@ -43,8 +45,9 @@ class SpatioTemporal_LSTM(nn.Module):
             self.bias_g_ = Parameter(torch.Tensor(4 * hidden_size))
             self.bias_i_ = Parameter(torch.Tensor(4 * hidden_size))
             self.bias_f_ = Parameter(torch.Tensor(4 * hidden_size))
-            self.bias_o = Parameter(torch.Tensor(4 * hidden_size))
-        
+            self.bias_o = Parameter(torch.Tensor(4 * hidden_size))        
+
+
         self._reset_parameters()
 
     def _reset_parameters(self):
@@ -52,7 +55,7 @@ class SpatioTemporal_LSTM(nn.Module):
         for weight in self.parameters():
             weight.data.uniform_(-stdv, stdv)
 
-    def _compute_cell(self, x, c, h, M):
+    def _compute_cell(self, x, h, c, M):
         g = torch.tanh(F.conv2d(x,self.weight_xg) + F.conv2d(h, self.weight_hg) + self.bias_g)
         i = torch.sigmoid(F.conv2d(x, self.weight_xi) + F.conv2d(h, self.weight_hi) + self.bias_i)
         f = torch.sigmoid(F.conv2d(x, self.weight_xf) + F.conv2d(h, self.weight_hf) + self.bias_f)
@@ -69,18 +72,15 @@ class SpatioTemporal_LSTM(nn.Module):
 
         h = o * torch.tanh(F.conv2d(torch.cat((c,M), dim= ),self.weight_1x1))
 
-        return M , h , c
+        return h,c,M
 
 
-    def forward(self,input, state=None):
+    def forward(self,input_, state=None):
         if state is None:
-            h = Variable(torch.Tensor())
-            c = Variable(torch.Tensor())
-            M = Variable(torch.Tensor())
-        
-        else:
-            h,c,M = state
+            raise ValueError('nfnaiszfv vsknv')
 
-        cell_output = self._compute_cell(input,c,h,M)
+        h,c,M = state
+
+        cell_output = self._compute_cell(input_,h,c,M)
 
         return cell_output
